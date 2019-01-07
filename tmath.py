@@ -120,6 +120,7 @@ class ZElement(object):
   def clone(self):
     return ZElement(self.value, self.set)
 
+
 class POF(object):
   """Implementation of a polynomial over an arbitrary field.
 
@@ -156,7 +157,7 @@ class POF(object):
       for k in b.nonZeroCoefficients():
         reminder.addToCoefficient(k+xtimes, field.mul(b.getCoefficient(k),q).plusInv())
     return [quotient, reminder]
-  
+
   def plusID(self):
     return POFElement(self)
 
@@ -248,10 +249,14 @@ class GFPOF(POF):
     for b_p in range(b.getDegree(), -1, -1):
       result = self.xtime(result)
       for a_p in a.nonZeroCoefficients():
-        result.setCoefficient(a_p, field.plus(result.getCoefficient(a_p), (field.mul(b.getCoefficient(b_p), a.getCoefficient(a_p)))))
+        result.addToCoefficient(a_p, field.mul(b.getCoefficient(b_p), a.getCoefficient(a_p)))
     return result
 
   def xtime(self, a):
+    """Multiplies the polynomial by x.
+
+    It is a building block of the multiplication algorithm mul.
+    """
     result = self.plusID()
     rp = self.rp
     downfactor = a.getCoefficient(rp.getDegree()-1)
@@ -260,6 +265,7 @@ class GFPOF(POF):
       result.setCoefficient(i, self.field.plus(a.getCoefficient(i-1), self.field.mul(downfactor, rp.getCoefficient(i)).plusInv()))
     return result
 
+
 class GFPOFElement(POFElement):
   def __init__(self, pof):
     self.pof = pof
@@ -267,6 +273,7 @@ class GFPOFElement(POFElement):
 
   def mulInv(self):
     return ExtEuclidean(POF(self.pof.field), self.pof.rp, self)[2]
+
 
 def ExtEuclidean(field, a, b):
   """Extended Euclidean algorithm."""
@@ -293,6 +300,7 @@ def ExtEuclidean(field, a, b):
   return [n2, x1, y1];
 
 def toBin(a):
+  """Integer to list of binary values."""
   r = []
   for i in range(0, 8):
     r.append(a%2)
@@ -300,6 +308,7 @@ def toBin(a):
   return r
 
 def fromBin(a):
+  """List of binary values to integer."""
   r = 0
   try:
     while True:
@@ -310,39 +319,46 @@ def fromBin(a):
   return r/2
 
 def EL2POL(a, pof):
-  pofi=pof.plusID()
+  """Create polynomial from field coefficient list."""
+  pofi = pof.plusID()
   for i in range(0, len(a)):
     pofi.setCoefficient(i, a[i])
   return pofi
 
-def L2EL(list, set):
+def L2EL(lst, field):
+  """List of raw values to a list of field elements."""
   r = []
-  for i in list:
-    seti = set.plusID()
-    seti.setValue(i)
-    r.append(seti)
+  for i in lst:
+    elem = field.plusID()
+    elem.setValue(i)
+    r.append(elem)
   return r
 
-def L2POL(a, set):
-  return EL2POL(L2EL(a, set), POF(set))
+def L2POL(a, field):
+  """Create polynomial from raw coefficient list in field."""
+  return EL2POL(L2EL(a, field), POF(field))
 
 def POL2EL(pofi):
+  """Get coefficient list in underlying field from polynomial."""
+  # FIXME: This seems horribly complicated.
   list = []
   if pofi.getDegree() == None:
     return list
-  for i in range(0, pofi.getDegree()+1):
+  for i in range(0, pofi.getDegree() + 1):
     list.append(pofi.pof.field.plusID())
   for i in pofi.nonZeroCoefficients():
     list[i] = pofi.getCoefficient(i)
   return list
 
-def EL2L(list):
+def EL2L(lst):
+  """List of field elements to list of raw values."""
   newlist = []
-  for i in range(0, len(list)):
-    newlist.append(list[i].value)
+  for i in range(0, len(lst)):
+    newlist.append(lst[i].value)
   return newlist
 
 def POL2L(pofi):
+  """Polynomial to list of raw values of its coefficients."""
   return EL2L(POL2EL(pofi))
 
 #if __name__ == '__main__':

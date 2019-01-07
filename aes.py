@@ -13,42 +13,61 @@ import copy
 
 # These are the basic fields we're using in Rijndael
 
-Z2 = Z(2)                            # Residue class 2 field
-POFZ2 = POF(Z2)                      # Polynomial over field Z2
-rps = L2POL([1, 1, 0, 1, 1, 0, 0, 0, 1], Z2)  # Reduction polynomial in POFZ2
-GFPOFZ2 = GFPOF(Z2, rps)              # Galious field over Z2 with reduction polynomial
+# Residue class 2 field
+Z2 = Z(2)
+# Polynomial over field Z2
+POFZ2 = POF(Z2)
+
+# Reduction polynomial in POFZ2 as defined by Page 36 of the Rijndael book.
+rp = L2POL([1, 1, 0, 1, 1, 0, 0, 0, 1], Z2)
+
+# Galious field over Z2 with reduction polynomial
+GFPOFZ2 = GFPOF(Z2, rp)
 
 def debug(msg, state):
   print msg,
   dumpStateHex(state)
   print ""
 
-def rol(val, shift, length):
-  if val > (1 << length):
-    raise Error
-  return ((val << shift) & ((1 << length)-1)) | (val >> (length-shift))
 
-def XORsum(a, length):
-  r = 0
-  while not a == 0:
-    r = r ^ (a&1)
-    a = a >> 1
-  return r
+def fGen(a, mask):
+  """This implements the vector multiplication on Page 36 of the Rijndael book.
 
-def fGen(a, mask, final):
+  Unfortunately this function conflates the large box generation with
+  the multiplication itself. Refactor.
+  """
+  def rol(val, shift, length):
+    if val > (1 << length):
+      raise Error
+    return ((val << shift) & ((1 << length)-1)) | (val >> (length-shift))
+
+  def XORsum(a, length):
+    r = 0
+    while not a == 0:
+      r = r ^ (a&1)
+      a = a >> 1
+    return r
+
   res = []
   for i in range(0, 8):
     res.append(XORsum(a & mask, 8))
     mask = rol(mask, 1, 8)
-  return fromBin(res) ^ final
+  return fromBin(res)
 
 def f(a):
-  return fGen(a, 0xF1, 0x63)
+  """f, as defined by the Rijndael book Page 36."""
+  # As defined by page 36. in the Rijndael book.
+  return fGen(a, 0xF1) ^ 0x63
 
 def fInv(a):
-  return fGen(a, 0xA4, 0x05)
+  """f^-1, as defined by the Rijndael book Page 37."""
+  return fGen(a, 0xA4) ^ 0x05
 
 def g(a):
+  """g, as defined by the Rijndael book Page 36.
+
+  This is just the multiplicative inverse under GFPOFZ2.
+  """
   if a == 0: return 0
   return fromBin(POL2L(EL2POL(L2EL(toBin(a), Z2), GFPOFZ2).mulInv()))
 
@@ -96,6 +115,7 @@ def keyExpansion(cipherKey, nr, nk, nb):
   return expandedKey
 
 def SubBytes(state, function):
+  """Sec 3.4.1 of the Rijndael book."""
   r = []
   for i in state:
     r.append(map(function, i))
@@ -104,6 +124,7 @@ def SubBytes(state, function):
 ShiftRowsOffsets = [[0, 1, 2, 3], [0, 1, 2, 3], [0, 1, 2, 3], [0, 1, 2, 4], [0, 1, 3, 4]]
 
 def ShiftRows(state, amp):
+  """Sec 3.4.2 of the Rijndael book."""
   offsets = ShiftRowsOffsets[len(state)-4]
   newstate = copy.deepcopy(state)
   r = []
@@ -139,9 +160,11 @@ def SingleMixColumn(stateSub, coeffs):
   return resStateSub
 
 def MixColumns(state, coeffs):
+  """Sec 3.4.3 of the Rijndael book."""
   return map(lambda x: SingleMixColumn(x, coeffs), state)
 
 def AddRoundKey(state, subkey):
+  """Sec 3.4.4 of the Rijndael book."""
   return map(lambda stateSL, keySL: map(lambda stateE, keyE: stateE^keyE, stateSL, keySL),  state, subkey)
 
 def round(state, subkey, round):
