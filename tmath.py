@@ -31,8 +31,6 @@ class Q(object):
   def __repr__(self):
     return "Q"
 
-  def newInstance(self):
-    return self.plusID()
 
 class QElement(object):
   def __init__(self, value, set):
@@ -92,8 +90,6 @@ class Z(object):
   def __repr__(self):
     return "Z(%d)" % self.order
 
-  def newInstance(self):
-    return self.plusID()
 
 class ZElement(object):
   def __init__(self, value, set):
@@ -140,7 +136,7 @@ class POF(object):
 
   def mul(self, a, b):
     # Get new result polynomial with all zero coefficients.
-    newp = self.newInstance()
+    newp = self.plusID()
     for k1 in a.nonZeroCoefficients():
       for k2 in b.nonZeroCoefficients():
         newp.addToCoefficient(k1+k2, self.field.mul(
@@ -149,7 +145,7 @@ class POF(object):
     return newp
   def longDiv(self, a, b):
     reminder = a.clone()
-    quotient = self.newInstance()
+    quotient = self.plusID()
     field = self.field
     while not (reminder.getDegree() < b.getDegree()):
       q = field.mul(
@@ -161,14 +157,11 @@ class POF(object):
         reminder.addToCoefficient(k+xtimes, field.mul(b.getCoefficient(k),q).plusInv())
     return [quotient, reminder]
   
-  def newInstance(self):
+  def plusID(self):
     return POFElement(self)
 
-  def plusID(self):
-    return self.newInstance()
-
   def mulID(self):
-    pofi = self.newInstance()
+    pofi = self.plusID()
     pofi.setCoefficient(0, self.field.mulID())
     return pofi
 
@@ -201,7 +194,7 @@ class POFElement(object):
     return self.c.keys()
 
   def plusInv(self):
-    newp = self.pof.newInstance()
+    newp = self.pof.plusID()
     for i in self.nonZeroCoefficients():
       newp.setCoefficient(i, self.getCoefficient(i).plusInv())
     return newp
@@ -234,7 +227,7 @@ class POFElement(object):
       return es[:-3]
 
   def clone(self):
-    clone=self.pof.newInstance()
+    clone=self.pof.plusID()
     for i in self.nonZeroCoefficients():
       clone.setCoefficient(i, self.getCoefficient(i).clone())
     return clone
@@ -246,11 +239,11 @@ class GFPOF(POF):
     POF.__init__(self, field)
     self.rp=rp
 
-  def newInstance(self):
+  def plusID(self):
     return GFPOFElement(self)
 
   def mul(self, a, b):
-    result = self.newInstance()
+    result = self.plusID()
     field = self.field
     for b_p in range(b.getDegree(), -1, -1):
       result = self.xtime(result)
@@ -259,7 +252,7 @@ class GFPOF(POF):
     return result
 
   def xtime(self, a):
-    result = self.newInstance()
+    result = self.plusID()
     rp = self.rp
     downfactor = a.getCoefficient(rp.getDegree()-1)
     result.setCoefficient(0, self.field.mul(downfactor, rp.getCoefficient(0).plusInv()))
@@ -317,7 +310,7 @@ def fromBin(a):
   return r/2
 
 def EL2POL(a, pof):
-  pofi=pof.newInstance()
+  pofi=pof.plusID()
   for i in range(0, len(a)):
     pofi.setCoefficient(i, a[i])
   return pofi
@@ -325,7 +318,7 @@ def EL2POL(a, pof):
 def L2EL(list, set):
   r = []
   for i in list:
-    seti = set.newInstance()
+    seti = set.plusID()
     seti.setValue(i)
     r.append(seti)
   return r

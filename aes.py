@@ -141,7 +141,7 @@ def SingleMixColumn(stateSub, coeffs):
   resStateSub = []
   localcoeffs = RORRay(coeffs, 0)
   for j in range(0, 4):
-    res = GFPOFZ2.newInstance()
+    res = GFPOFZ2.plusID()
 #    print "LC: ", localcoeffs
     for i in range(0, 4):
       pol1 = EL2POL(L2EL(toBin(stateSub[i]), Z2), GFPOFZ2)
