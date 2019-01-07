@@ -121,7 +121,13 @@ def SubBytes(state, function):
     r.append(map(function, i))
   return r
 
-ShiftRowsOffsets = [[0, 1, 2, 3], [0, 1, 2, 3], [0, 1, 2, 3], [0, 1, 2, 4], [0, 1, 3, 4]]
+ShiftRowsOffsets = [
+  [0, 1, 2, 3],
+  [0, 1, 2, 3],
+  [0, 1, 2, 3],
+  [0, 1, 2, 4],
+  [0, 1, 3, 4]
+]
 
 def ShiftRows(state, amp):
   """Sec 3.4.2 of the Rijndael book."""
@@ -165,17 +171,21 @@ def MixColumns(state, coeffs):
 
 def AddRoundKey(state, subkey):
   """Sec 3.4.4 of the Rijndael book."""
-  return map(lambda stateSL, keySL: map(lambda stateE, keyE: stateE^keyE, stateSL, keySL),  state, subkey)
+  return map(
+    lambda stateSL, keySL: map(
+      lambda stateE, keyE: stateE^keyE, stateSL, keySL),
+    state, subkey)
 
 def round(state, subkey, round):
+  debug("R[%02d].start" % round, state)
   state = SubBytes(state, SR)
-  debug("R[%d].s_box" % round, state)
+  debug("R[%02d].s_box" % round, state)
   state = ShiftRows(state, 1)
-  debug("R[%d].s_row" % round, state)
+  debug("R[%02d].s_row" % round, state)
   state = MixColumns(state, [0x02, 0x03, 0x01, 0x01])
-  debug("R[%d].m_col" % round, state)
+  debug("R[%02d].m_col" % round, state)
   state = AddRoundKey(state, subkey)
-  debug("R[%d].k_sch" % round, subkey)
+  debug("R[%02d].k_sch" % round, subkey)
   return state
 
 def invRound(state, subkey, round):
@@ -186,21 +196,19 @@ def invRound(state, subkey, round):
   return state
 
 def finalRound(state, key, round):
+  debug("R[%02d].start" % round, state)
   state = SubBytes(state, SR)
-  debug("R[%d].s_box" % round,  state)
+  debug("R[%02d].s_box" % round,  state)
   state = ShiftRows(state, 1)
-  debug("R[%d].s_row" % round,  state)
+  debug("R[%02d].s_row" % round,  state)
   state = AddRoundKey(state, key)
-  debug("R[%d].k_sch" % round,  key)
+  debug("R[%02d].k_sch" % round,  key)
   return state
 
 def invFinalRound(state, key, round):
   state = AddRoundKey(state, key)
-  debug("R[%d].k_sch" % round,  state)
   state = ShiftRows(state, -1)
-  debug("R[%d].s_row" % round,  state)
   state = SubBytes(state, SRInv)
-  debug("R[%d].s_box" % round,  state)
   return state
 
 def rijndael(state, cipherKey):
@@ -214,6 +222,7 @@ def rijndael(state, cipherKey):
     subkey = expandedKey[nb*i:nb*(i+1)]
     state = round(state, expandedKey[nb*i:nb*(i+1)], i)
   state = finalRound(state, expandedKey[nb*(nr):nb*(nr+1)], nr)
+  debug("R[%02d].output" % nr, state)
   return stateToArray(state)
 
 def invRijndael(state, cipherKey):
@@ -221,7 +230,6 @@ def invRijndael(state, cipherKey):
   nk = len(cipherKey)
   nr = max(nb, nk)+6
   expandedKey = keyExpansion(cipherKey, nr, nk, nb)
-  debug("R[00].input", state)
   state = invFinalRound(state, expandedKey[nb*(nr):nb*(nr+1)], nr)
   for i in range(nr-1, 0, -1):
     subkey = expandedKey[nb*i:nb*(i+1)]
@@ -254,9 +262,15 @@ def dumpStateHex(state):
   print "]",
 
 
-key = arrayToState([0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c])
-msg = arrayToState([0x32, 0x43, 0xf6, 0xa8, 0x88, 0x5a, 0x30, 0x8d, 0x31, 0x31, 0x98, 0xa2, 0xe0, 0x37, 0x07, 0x34])
-enc = rijndael(msg, key)
-dec = invRijndael(arrayToState(enc), key)
-print dec
+# D.2 Rijndael test vectors
+key = [
+  0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6,
+  0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c]
+msg = [
+  0x32, 0x43, 0xf6, 0xa8, 0x88, 0x5a, 0x30, 0x8d,
+  0x31, 0x31, 0x98, 0xa2, 0xe0, 0x37, 0x07, 0x34]
+
+enc = rijndael(arrayToState(msg), arrayToState(key))
+dec = invRijndael(arrayToState(enc), arrayToState(key))
+print msg == dec
 

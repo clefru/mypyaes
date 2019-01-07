@@ -155,7 +155,8 @@ class POF(object):
       xtimes = reminder.getDegree() - b.getDegree()
       quotient.setCoefficient(xtimes, q)
       for k in b.nonZeroCoefficients():
-        reminder.addToCoefficient(k+xtimes, field.mul(b.getCoefficient(k),q).plusInv())
+        reminder.addToCoefficient(
+          k+xtimes, field.mul(b.getCoefficient(k),q).plusInv())
     return [quotient, reminder]
 
   def plusID(self):
@@ -249,7 +250,10 @@ class GFPOF(POF):
     for b_p in range(b.getDegree(), -1, -1):
       result = self.xtime(result)
       for a_p in a.nonZeroCoefficients():
-        result.addToCoefficient(a_p, field.mul(b.getCoefficient(b_p), a.getCoefficient(a_p)))
+        result.addToCoefficient(
+          a_p,
+          field.mul(b.getCoefficient(b_p),
+                    a.getCoefficient(a_p)))
     return result
 
   def xtime(self, a):
@@ -260,9 +264,16 @@ class GFPOF(POF):
     result = self.plusID()
     rp = self.rp
     downfactor = a.getCoefficient(rp.getDegree()-1)
-    result.setCoefficient(0, self.field.mul(downfactor, rp.getCoefficient(0).plusInv()))
+    result.setCoefficient(
+      0,
+      self.field.mul(downfactor,
+                     rp.getCoefficient(0).plusInv()))
     for i in range(1, rp.getDegree()):
-      result.setCoefficient(i, self.field.plus(a.getCoefficient(i-1), self.field.mul(downfactor, rp.getCoefficient(i)).plusInv()))
+      result.setCoefficient(
+        i,
+        self.field.plus(a.getCoefficient(i-1),
+                        self.field.mul(downfactor,
+                                       rp.getCoefficient(i)).plusInv()))
     return result
 
 
@@ -364,6 +375,7 @@ def POL2L(pofi):
 #if __name__ == '__main__':
 #  for i in range(1, 256):
 #    inverse=fromBin(POL2L(ExtEuclidean(POFZ2, rps, L2POL(toBin(i), Z2))[2]))
-#    inverseinverse=fromBin(POL2L(ExtEuclidean(POFZ2, rps, L2POL(toBin(inverse), Z2))[2]))
+#    inverseinverse=fromBin(POL2L(
+#      ExtEuclidean(POFZ2, rps, L2POL(toBin(inverse), Z2))[2]))
 #    if not (inverseinverse == i):
 #      print i, "not self inverse!"
