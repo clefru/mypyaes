@@ -92,9 +92,9 @@ class ZElement:
   def clone(self):
     return ZElement(self.value,self.set)
 
-# Implementation of a polynomial over an arbitrary field 
+# Implementation of a polynomial over an arbitrary field
 # POF=PolynomialOverField
-class POF: 
+class POF:
   def __init__(self,field):
     self.field=field
   def plus(self,a,b):
@@ -132,7 +132,7 @@ class POF:
     pofi = self.newInstance()
     pofi.setCoefficient(0, self.field.mulID())
     return pofi
-    
+
 class POFElement:
   def __init__(self,pof):
     self.pof=pof
@@ -177,7 +177,7 @@ class POFElement:
       if not cof.isMulID() or k == 0 :
         es = es + cof.__str__()
       if(k > 0):
-        es = es + " x" 
+        es = es + " x"
         if(k > 1):
           es = es + "^" + k.__str__()
       es = es + " + "
@@ -191,8 +191,8 @@ class POFElement:
       clone.setCoefficient(i,self.getCoefficient(i).clone())
     return clone
 
-# Implementation of a Galious field 
-    
+# Implementation of a Galious field
+
 class GFPOF(POF):
   def __init__(self,field,rp):
     POF.__init__(self,field)
@@ -217,7 +217,7 @@ class GFPOF(POF):
     for i in range(1,rp.getDegree()):
       result.setCoefficient(i,self.field.plus(a.getCoefficient(i-1),self.field.mul(downfactor,rp.getCoefficient(i)).plusInv()))
     return result
-    
+
 class GFPOFElement(POFElement):
   def __init__(self,pof):
     self.pof=pof
@@ -256,20 +256,20 @@ def toBin(a):
   return r
 def fromBin(a):
   r = 0
-  try: 
+  try:
     while True:
       r=r*2
       r=r+a.pop()
   except IndexError:
     pass
   return r/2
-  
+
 def EL2POL(a,pof):
   pofi=pof.newInstance()
   for i in range(0,len(a)):
     pofi.setCoefficient(i,a[i])
   return pofi
-  
+
 def L2EL(list,set):
   r = []
   for i in list:
@@ -280,7 +280,7 @@ def L2EL(list,set):
 
 def L2POL(a,set):
   return EL2POL(L2EL(a,set),POF(set))
-  
+
 def POL2EL(pofi):
   list = []
   if pofi.getDegree() == None:
@@ -290,7 +290,7 @@ def POL2EL(pofi):
   for i in pofi.nonZeroCoefficients():
     list[i] = pofi.getCoefficient(i)
   return list
-  
+
 def EL2L(list):
   newlist = []
   for i in range(0,len(list)):

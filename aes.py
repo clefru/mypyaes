@@ -20,14 +20,14 @@ def debug(msg,state):
   print ""
 
 def rol(val,shift,length):
-  if val > (1 << length): 
-    raise Error    
+  if val > (1 << length):
+    raise Error
   return ((val << shift) & ((1 << length)-1)) | (val >> (length-shift))
 def XORsum(a,length):
   r = 0
   while not a == 0:
     r = r ^ (a&1)
-    a = a >> 1  
+    a = a >> 1
   return r
 def fGen(a,mask,final):
   res = []
@@ -35,12 +35,12 @@ def fGen(a,mask,final):
     res.append(XORsum(a & mask,8))
     mask = rol(mask,1,8)
   return fromBin(res) ^ final
-  
+
 def f(a):
   return fGen(a,0xF1,0x63)
 def fInv(a):
   return fGen(a,0xA4,0x05)
-  
+
 def g(a):
   if a == 0: return 0
   return fromBin(POL2L(EL2POL(L2EL(toBin(a),Z2),GFPOFZ2).mulInv()))
@@ -71,7 +71,7 @@ except IOError:
     SInvTable.append(g(fInv(i)))
   dumpfile = open("SInvTable.dump",'wb')
   dump(SInvTable,dumpfile)
-  
+
 RCCache = [0x00,0x01]
 
 def RC(a):
@@ -101,8 +101,8 @@ def keyExpansion(cipherKey,nr,nk,nb):
       for i in range(0,4):
         sub.append(expandedKey[j-nk][i] ^ expandedKey[j-1][i])
       expandedKey.append(sub)
-  return expandedKey  
-  
+  return expandedKey
+
 def SubBytes(state,function):
   r = []
   for i in state:
@@ -128,7 +128,7 @@ def RORRay(array,amount):
   for i in array[0:-amount]:
     new.append(i)
   return new
-  
+
 def SingleMixColumn(stateSub,coeffs):
   resStateSub = []
   localcoeffs = RORRay(coeffs,0)
@@ -142,13 +142,13 @@ def SingleMixColumn(stateSub,coeffs):
 #      print "pol1:", pol1, "pol2:",pol2, "mulres: ",mulres
       res = GFPOFZ2.plus(res,mulres)
     fb = fromBin(EL2L(POL2EL(res)))
-    resStateSub.append(fb)  
-    localcoeffs = RORRay(localcoeffs,1)  
+    resStateSub.append(fb)
+    localcoeffs = RORRay(localcoeffs,1)
   return resStateSub
-  
+
 def MixColumns(state,coeffs):
   return map(lambda x: SingleMixColumn(x,coeffs),state)
-  
+
 def AddRoundKey(state,subkey):
   return map(lambda stateSL,keySL: map(lambda stateE,keyE: stateE^keyE,stateSL,keySL), state,subkey)
 
@@ -162,7 +162,7 @@ def round(state,subkey,round):
   state = AddRoundKey(state,subkey)
   debug("R[%d].k_sch" % round,subkey)
   return state
-  
+
 def invRound(state,subkey,round):
   state = AddRoundKey(state,subkey)
   state = MixColumns(state,[0x0E,0x0B,0x0D,0x09])
@@ -187,7 +187,7 @@ def invFinalRound(state,key,round):
   state = SubBytes(state,SRInv)
   debug("R[%d].s_box" % round, state)
   return state
-  
+
 def rijndael(state,cipherKey):
   nb = len(state)
   nk = len(cipherKey)
@@ -213,7 +213,7 @@ def invRijndael(state,cipherKey):
     state = invRound(state,expandedKey[nb*i:nb*(i+1)],i)
   state = AddRoundKey(state,expandedKey[0:nb])
   return stateToArray(state)
-  
+
 def arrayToState(array):
   state = []
   if len(array)%4 != 0:
@@ -238,7 +238,7 @@ def dumpStateHex(state):
     print "],",
   print "]",
 
-  
+
 key = arrayToState([0x2b,0x7e,0x15,0x16,0x28,0xae,0xd2,0xa6,0xab,0xf7,0x15,0x88,0x09,0xcf,0x4f,0x3c])
 msg = arrayToState([0x32,0x43,0xf6,0xa8,0x88,0x5a,0x30,0x8d,0x31,0x31,0x98,0xa2,0xe0,0x37,0x07,0x34])
 enc = rijndael(msg,key)
