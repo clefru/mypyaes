@@ -176,36 +176,36 @@ def AddRoundKey(state, subkey):
       lambda stateE, keyE: stateE^keyE, stateSL, keySL),
     state, subkey)
 
-def round(state, subkey, round):
-  debug("R[%02d].start" % round, state)
+def rnd(state, subkey, nr):
+  debug("R[%02d].start" % nr, state)
   state = SubBytes(state, SR)
-  debug("R[%02d].s_box" % round, state)
+  debug("R[%02d].s_box" % nr, state)
   state = ShiftRows(state, 1)
-  debug("R[%02d].s_row" % round, state)
+  debug("R[%02d].s_row" % nr, state)
   state = MixColumns(state, [0x02, 0x03, 0x01, 0x01])
-  debug("R[%02d].m_col" % round, state)
+  debug("R[%02d].m_col" % nr, state)
   state = AddRoundKey(state, subkey)
-  debug("R[%02d].k_sch" % round, subkey)
+  debug("R[%02d].k_sch" % nr, subkey)
   return state
 
-def invRound(state, subkey, round):
+def invRnd(state, subkey, nr):
   state = AddRoundKey(state, subkey)
   state = MixColumns(state, [0x0E, 0x0B, 0x0D, 0x09])
   state = ShiftRows(state, -1)
   state = SubBytes(state, SRInv)
   return state
 
-def finalRound(state, key, round):
-  debug("R[%02d].start" % round, state)
+def finalRnd(state, key, nr):
+  debug("R[%02d].start" % nr, state)
   state = SubBytes(state, SR)
-  debug("R[%02d].s_box" % round,  state)
+  debug("R[%02d].s_box" % nr,  state)
   state = ShiftRows(state, 1)
-  debug("R[%02d].s_row" % round,  state)
+  debug("R[%02d].s_row" % nr,  state)
   state = AddRoundKey(state, key)
-  debug("R[%02d].k_sch" % round,  key)
+  debug("R[%02d].k_sch" % nr,  key)
   return state
 
-def invFinalRound(state, key, round):
+def invFinalRnd(state, key, nr):
   state = AddRoundKey(state, key)
   state = ShiftRows(state, -1)
   state = SubBytes(state, SRInv)
@@ -220,8 +220,8 @@ def rijndael(state, cipherKey):
   state = AddRoundKey(state, expandedKey[0:nb])
   for i in range(1, nr):
     subkey = expandedKey[nb*i:nb*(i+1)]
-    state = round(state, expandedKey[nb*i:nb*(i+1)], i)
-  state = finalRound(state, expandedKey[nb*(nr):nb*(nr+1)], nr)
+    state = rnd(state, expandedKey[nb*i:nb*(i+1)], i)
+  state = finalRnd(state, expandedKey[nb*(nr):nb*(nr+1)], nr)
   debug("R[%02d].output" % nr, state)
   return stateToArray(state)
 
@@ -230,10 +230,10 @@ def invRijndael(state, cipherKey):
   nk = len(cipherKey)
   nr = max(nb, nk)+6
   expandedKey = keyExpansion(cipherKey, nr, nk, nb)
-  state = invFinalRound(state, expandedKey[nb*(nr):nb*(nr+1)], nr)
+  state = invFinalRnd(state, expandedKey[nb*(nr):nb*(nr+1)], nr)
   for i in range(nr-1, 0, -1):
     subkey = expandedKey[nb*i:nb*(i+1)]
-    state = invRound(state, expandedKey[nb*i:nb*(i+1)], i)
+    state = invRnd(state, expandedKey[nb*i:nb*(i+1)], i)
   state = AddRoundKey(state, expandedKey[0:nb])
   return stateToArray(state)
 
