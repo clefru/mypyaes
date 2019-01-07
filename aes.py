@@ -60,25 +60,9 @@ def SRInv(a):
 
 STable = []
 SInvTable = []
-try:
-  dumpfile = open("STable.dump", 'rb')
-  STable = load(dumpfile)
-except IOError:
-  print "Initializing STable"
-  for i in range(0, 0x100):
-    STable.append(f(g(i)))
-  stfile = open("STable.dump", 'wb')
-  dump(STable, stfile)
-
-try:
-  dumpfile = open("SInvTable.dump", 'rb')
-  SInvTable = load(dumpfile)
-except IOError:
-  print "Initializing SInvTable"
-  for i in range(0, 0x100):
-    SInvTable.append(g(fInv(i)))
-  dumpfile = open("SInvTable.dump", 'wb')
-  dump(SInvTable, dumpfile)
+for i in range(0, 0x100):
+  STable.append(f(g(i)))
+  SInvTable.append(g(fInv(i)))
 
 RCCache = [0x00, 0x01]
 
