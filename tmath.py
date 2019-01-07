@@ -100,20 +100,16 @@ class POF:
 	def plus(self,a,b):
 		newp = a.clone()
 		for i in b.nonZeroCoefficients():
-			newp.setCoefficient(i,self.field.plus(newp.getCoefficient(i),b.getCoefficient(i)))
+			newp.addToCoefficient(i, b.getCoefficient(i))
 		return newp
 	def mul(self,a,b):
                 # Get new result polynomial with all zero coefficients.
 		newp = self.newInstance()
 		for k1 in a.nonZeroCoefficients():
 			for k2 in b.nonZeroCoefficients():
-				newp.setCoefficient(k1+k2,
-                                                    # Add the existing value at this coefficient.
-                                                    self.field.plus(
-                                                            newp.getCoefficient(k1+k2),
-					                    self.field.mul(
-                                                                    a.getCoefficient(k1),
-                                                                    b.getCoefficient(k2))))
+				newp.addToCoefficient(k1+k2, self.field.mul(
+                                        a.getCoefficient(k1),
+                                        b.getCoefficient(k2)))
 		return newp
 	def longDiv(self,a,b):
 		reminder = a.clone()
@@ -126,9 +122,7 @@ class POF:
 			xtimes = reminder.getDegree() - b.getDegree()
 			quotient.setCoefficient(xtimes, q)
 			for k in b.nonZeroCoefficients():
-				reminder.setCoefficient(k+xtimes,
-                                                        field.plus(reminder.getCoefficient(k+xtimes),
-                                                                   field.mul(b.getCoefficient(k),q).plusInv()))
+				reminder.addToCoefficient(k+xtimes, field.mul(b.getCoefficient(k),q).plusInv())
 		return [quotient, reminder]
 	def newInstance(self):
 		return POFElement(self)
@@ -151,6 +145,10 @@ class POFElement:
 			self.c[n] = fieldinstance
 	def getCoefficient(self,n):
 		return self.c.get(n, self.pof.field.plusID())
+
+	def addToCoefficient(self, n, i):
+                self.setCoefficient(n, self.pof.field.plus(self.getCoefficient(n), i))
+
 	def getDegree(self):
 		max = None
 		for k in self.c.keys():
