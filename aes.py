@@ -270,7 +270,8 @@ msg = [
   0x32, 0x43, 0xf6, 0xa8, 0x88, 0x5a, 0x30, 0x8d,
   0x31, 0x31, 0x98, 0xa2, 0xe0, 0x37, 0x07, 0x34]
 
-enc = rijndael(arrayToState(msg), arrayToState(key))
-dec = invRijndael(arrayToState(enc), arrayToState(key))
-print msg == dec
+if __name__ == '__main__':
+  enc = rijndael(arrayToState(msg), arrayToState(key))
+  dec = invRijndael(arrayToState(enc), arrayToState(key))
+  print msg == dec
 
