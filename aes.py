@@ -10,7 +10,10 @@
 from tmath import *
 from marshal import *
 import copy
+import logging
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger("aes.py")
 # These are the basic fields we're using in Rijndael
 
 # Residue class 2 field
@@ -21,11 +24,11 @@ POFZ2 = POF(Z2)
 # Reduction polynomial in POFZ2 as defined by Page 36 of the Rijndael book.
 rp = L2POL([1, 1, 0, 1, 1, 0, 0, 0, 1], Z2)
 
-# Galious field over Z2 with reduction polynomial
+# Galois field over Z2 with reduction polynomial
 GFPOFZ2 = GFPOF(Z2, rp)
 
 def debug(msg, state):
-  print msg, dumpStateHex(state)
+  logger.debug(msg + " " + dumpStateHex(state))
 
 def fGen(a, mask):
   """This implements the vector multiplication on Page 36 of the Rijndael book.
@@ -175,15 +178,15 @@ def AddRoundKey(state, subkey):
     state, subkey)
 
 def rnd(state, subkey, nr):
-  debug("R[%02d].start" % nr, state)
+  logger.debug("R[%02d].start   %s" % (nr, dumpStateHex(state)))
   state = SubBytes(state, SR)
-  debug("R[%02d].s_box" % nr, state)
+  logger.debug("R[%02d].s_box   %s" % (nr, dumpStateHex(state)))
   state = ShiftRows(state, 1)
-  debug("R[%02d].s_row" % nr, state)
+  logger.debug("R[%02d].s_row   %s" % (nr, dumpStateHex(state)))
   state = MixColumns(state, [0x02, 0x03, 0x01, 0x01])
-  debug("R[%02d].m_col" % nr, state)
+  logger.debug("R[%02d].m_col   %s" % (nr, dumpStateHex(state)))
   state = AddRoundKey(state, subkey)
-  debug("R[%02d].k_sch" % nr, subkey)
+  logger.debug("R[%02d].k_sch   %s" % (nr, dumpStateHex(subkey)))
   return state
 
 def invRnd(state, subkey, nr):
@@ -194,13 +197,13 @@ def invRnd(state, subkey, nr):
   return state
 
 def finalRnd(state, key, nr):
-  debug("R[%02d].start" % nr, state)
+  logger.debug("R[%02d].start   %s" % (nr, dumpStateHex(state)))
   state = SubBytes(state, SR)
-  debug("R[%02d].s_box" % nr,  state)
+  logger.debug("R[%02d].s_box   %s" % (nr, dumpStateHex(state)))
   state = ShiftRows(state, 1)
-  debug("R[%02d].s_row" % nr,  state)
+  logger.debug("R[%02d].s_row   %s" % (nr, dumpStateHex(state)))
   state = AddRoundKey(state, key)
-  debug("R[%02d].k_sch" % nr,  key)
+  logger.debug("R[%02d].k_sch   %s" % (nr, dumpStateHex(key)))
   return state
 
 def invFinalRnd(state, key, nr):
@@ -214,13 +217,14 @@ def rijndael(state, cipherKey):
   nk = len(cipherKey)
   nr = max(nb, nk)+6
   expandedKey = keyExpansion(cipherKey, nr, nk, nb)
-  debug("R[00].input", state)
+  logger.debug("R[00].input   %s" % dumpStateHex(state))
   state = AddRoundKey(state, expandedKey[0:nb])
+  logger.debug("R[%02d].k_sch   %s" % (nr, dumpStateHex(expandedKey[0:nb])))
   for i in range(1, nr):
     subkey = expandedKey[nb*i:nb*(i+1)]
     state = rnd(state, expandedKey[nb*i:nb*(i+1)], i)
   state = finalRnd(state, expandedKey[nb*(nr):nb*(nr+1)], nr)
-  debug("R[%02d].output" % nr, state)
+  logger.debug("R[%02d].output  %s" % (nr, dumpStateHex(state)))
   return stateToArray(state)
 
 def invRijndael(state, cipherKey):
@@ -269,6 +273,7 @@ msg = [
   0x31, 0x31, 0x98, 0xa2, 0xe0, 0x37, 0x07, 0x34]
 
 if __name__ == '__main__':
+  logger.setLevel(logging.DEBUG)
   enc = rijndael(arrayToState(msg), arrayToState(key))
   dec = invRijndael(arrayToState(enc), arrayToState(key))
   print msg == dec
