@@ -275,6 +275,9 @@ msg = [
 if __name__ == '__main__':
   logger.setLevel(logging.DEBUG)
   enc = rijndael(arrayToState(msg), arrayToState(key))
+  # This enc test vector comes from Page 216 in the Rijndael book labelled R[10].output
+  print "Test vector check:  ", enc == [0x39, 0x25, 0x84, 0x1d, 0x02, 0xdc, 0x09, 0xfb, 0xdc, 0x11, 0x85, 0x97, 0x19, 0x6a, 0x0b, 0x32]
+
   dec = invRijndael(arrayToState(enc), arrayToState(key))
-  print msg == dec
+  print "Encryption symmetry:", msg == dec
 
