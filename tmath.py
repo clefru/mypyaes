@@ -61,6 +61,7 @@ class QElement(object):
   def clone(self):
     return QElement(self.value, self.set)
 
+
 class Z(object):
   """Implementation of the mathemical set Z/nZ."""
   def __init__(self, order):
@@ -140,18 +141,19 @@ class POF(object):
     newp = self.plusID()
     for k1 in a.nonZeroCoefficients():
       for k2 in b.nonZeroCoefficients():
-        newp.addToCoefficient(k1+k2, self.field.mul(
-                                        a.getCoefficient(k1),
-                                        b.getCoefficient(k2)))
+        newp.addToCoefficient(
+          k1+k2, self.field.mul(
+            a.getCoefficient(k1),
+            b.getCoefficient(k2)))
     return newp
+
   def longDiv(self, a, b):
     reminder = a.clone()
     quotient = self.plusID()
     field = self.field
     while not (reminder.getDegree() < b.getDegree()):
-      q = field.mul(
-                                b.getCoefficient(b.getDegree()).mulInv(),
-                                reminder.getCoefficient(reminder.getDegree()))
+      q = field.mul(b.getCoefficient(b.getDegree()).mulInv(),
+                    reminder.getCoefficient(reminder.getDegree()))
       xtimes = reminder.getDegree() - b.getDegree()
       quotient.setCoefficient(xtimes, q)
       for k in b.nonZeroCoefficients():
@@ -229,17 +231,17 @@ class POFElement(object):
       return es[:-3]
 
   def clone(self):
-    clone=self.pof.plusID()
+    clone = self.pof.plusID()
     for i in self.nonZeroCoefficients():
       clone.setCoefficient(i, self.getCoefficient(i).clone())
     return clone
 
 
 class GFPOF(POF):
-  """Implementation of a Galious field."""
+  """Implementation of a Galois field."""
   def __init__(self, field, rp):
     POF.__init__(self, field)
-    self.rp=rp
+    self.rp = rp
 
   def plusID(self):
     return GFPOFElement(self)
