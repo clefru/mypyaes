@@ -25,10 +25,7 @@ rp = L2POL([1, 1, 0, 1, 1, 0, 0, 0, 1], Z2)
 GFPOFZ2 = GFPOF(Z2, rp)
 
 def debug(msg, state):
-  print msg,
-  dumpStateHex(state)
-  print ""
-
+  print msg, dumpStateHex(state)
 
 def fGen(a, mask):
   """This implements the vector multiplication on Page 36 of the Rijndael book.
@@ -253,14 +250,14 @@ def stateToArray(state):
   return array
 
 def dumpStateHex(state):
-  print "[",
+  s = "["
   for i in state:
-    print "[",
+    s += "["
     for j in i:
-      print "%2X" % j,
-    print "],",
-  print "]",
-
+      s += "%02X" % j
+    s += "],"
+  s += "]"
+  return s
 
 # D.2 Rijndael test vectors
 key = [
