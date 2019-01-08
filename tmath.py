@@ -264,18 +264,30 @@ class GFPOF(POF):
     It is a building block of the multiplication algorithm mul.
     """
     result = self.plusID()
-    rp = self.rp
-    downfactor = a.getCoefficient(rp.getDegree()-1)
-    result.setCoefficient(
-      0,
-      self.field.mul(downfactor,
-                     rp.getCoefficient(0).plusInv()))
-    for i in range(1, rp.getDegree()):
+
+    # The polynomial
+    #   a_n x^n     + a_{n-1} x^{n-1} + ... + a_1 x   + a_0
+    # gets multiplied by x resulting in 
+    #   a_n x^{n+1} + a_{n-1} x^n     + ... + a_1 x^2 + a_0 x
+    # ... essentially shifting the coefficients by one index higher.
+    #
+    # The resulting polynomial needs to be reduced by the reduction
+    # polynomial. The following loop subtracts the reduction
+    # polynomial a_n times from the result, and also shifts the
+    # indices.
+
+    # Get the highest coefficient of the reduction polynomial, and
+    # subtract the reduction polynomial a_n times from a.
+    a_n = a.getCoefficient(self.rp.getDegree()-1)
+    for i in range(0, self.rp.getDegree()):
       result.setCoefficient(
         i,
-        self.field.plus(a.getCoefficient(i-1),
-                        self.field.mul(downfactor,
-                                       rp.getCoefficient(i)).plusInv()))
+        self.field.plus(
+          # Get plusID from the underlying field for the lowest
+          # coefficient
+          a.getCoefficient(i-1) if i else self.field.plusID(),
+          self.field.mul(a_n,
+                         self.rp.getCoefficient(i)).plusInv()))
     return result
 
 
