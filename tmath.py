@@ -14,16 +14,16 @@ class Q(object):
     return QElement(0, self)
 
   def plus(self, a, b):
-    return QElement(a.value+b.value, self)
+    return QElement(a.value + b.value, self)
 
   def mulID(self):
     return QElement(1, self)
 
   def mul(self, a, b):
-    return QElement(a.value*b.value, self)
+    return QElement(a.value * b.value, self)
 
   def longDiv(self, a, b):
-    return [QElement(a.value/b.value, self), QElement(a.value%b.value, self)]
+    return [QElement(a.value / b.value, self), QElement(a.value % b.value, self)]
 
   def __str__(self):
     return "Q"
@@ -56,7 +56,7 @@ class QElement(object):
     return QElement(-self.value, self.set)
 
   def mulInv(self):
-    return QElement(float(1)/float(self.value), self.set)
+    return QElement(float(1) / float(self.value), self.set)
 
   def clone(self):
     return QElement(self.value, self.set)
@@ -75,7 +75,7 @@ class Z(object):
 
   def plus(self, a, b):
     if a.set == b.set:
-      return ZElement(a.value+b.value, self)
+      return ZElement(a.value + b.value, self)
     else:
       raise Error, 'Trying to add ZElements from different Z classes'
 
@@ -83,7 +83,7 @@ class Z(object):
     return ZElement(1, self)
 
   def mul(self, a, b):
-    return ZElement(a.value*b.value, self)
+    return ZElement(a.value * b.value, self)
 
   def __str__(self):
     return "Z(%d)" % self.order
@@ -95,7 +95,7 @@ class Z(object):
 class ZElement(object):
   def __init__(self, value, set):
     self.set = set
-    self.value = (value%set.order)
+    self.value = value % set.order
 
   def __str__(self):
     return "%(v)d" % {'v':self.value, 's':self.set }
@@ -104,7 +104,7 @@ class ZElement(object):
     return "%(v)d" % {'v':self.value, 's':self.set }
 
   def setValue(self, value):
-    self.value = (value%self.set.order)
+    self.value = value % self.set.order
 
   def isPlusID(self):
     return self.value == 0
@@ -113,10 +113,10 @@ class ZElement(object):
     return self.value == 1
 
   def plusInv(self):
-    return ZElement(self.set.order-self.value, self.set)
+    return ZElement(self.set.order - self.value, self.set)
 
   def mulInv(self):
-    return ZElement(self.value**(self.set.order-2), self.set)
+    return ZElement(self.value ** (self.set.order - 2), self.set)
 
   def clone(self):
     return ZElement(self.value, self.set)
@@ -158,7 +158,8 @@ class POF(object):
       quotient.setCoefficient(xtimes, q)
       for k in b.nonZeroCoefficients():
         reminder.addToCoefficient(
-          k+xtimes, field.mul(b.getCoefficient(k),q).plusInv())
+          k+xtimes,
+          field.mul(b.getCoefficient(k), q).plusInv())
     return [quotient, reminder]
 
   def plusID(self):
@@ -248,14 +249,13 @@ class GFPOF(POF):
 
   def mul(self, a, b):
     result = self.plusID()
-    field = self.field
     for b_p in range(b.getDegree(), -1, -1):
       result = self.xtime(result)
       for a_p in a.nonZeroCoefficients():
         result.addToCoefficient(
           a_p,
-          field.mul(b.getCoefficient(b_p),
-                    a.getCoefficient(a_p)))
+          self.field.mul(b.getCoefficient(b_p),
+                         a.getCoefficient(a_p)))
     return result
 
   def xtime(self, a):
@@ -320,7 +320,7 @@ def ExtEuclidean(field, a, b):
     x1 = x2
     y0 = y1
     y1 = y2
-    [q, r]=field.longDiv(n1,n2)
+    [q, r]=field.longDiv(n1, n2)
 #    print "n1:",n1," n2:",n2," q:",q," r:",r, " x2: ", x2 #, " y2:",y2
   return [n2, x1, y1];
 
@@ -337,8 +337,8 @@ def fromBin(a):
   r = 0
   try:
     while True:
-      r=r*2
-      r=r+a.pop()
+      r = r*2
+      r = r+a.pop()
   except IndexError:
     pass
   return r/2

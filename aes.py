@@ -137,13 +137,13 @@ ShiftRowsOffsets = [
 
 def ShiftRows(state, amp):
   """Sec 3.4.2 of the Rijndael book."""
-  offsets = ShiftRowsOffsets[len(state)-4]
+  offsets = ShiftRowsOffsets[len(state) - 4]
   newstate = copy.deepcopy(state)
   r = []
   for j in range(0, len(state)):
     s = []
     for i in range(0, 4):
-      newstate[j][i] = state[(j+offsets[i]*amp)%len(state)][i]
+      newstate[j][i] = state[(j + offsets[i] * amp) % len(state)][i]
   return newstate
 
 def RORRay(array, amount):
@@ -188,6 +188,7 @@ def rnd(state, subkey, nr):
   logger.debug("R[%02d].s_box   %s" % (nr, dumpStateHex(state)))
   state = ShiftRows(state, 1)
   logger.debug("R[%02d].s_row   %s" % (nr, dumpStateHex(state)))
+  # MAGIC
   state = MixColumns(state, [0x02, 0x03, 0x01, 0x01])
   logger.debug("R[%02d].m_col   %s" % (nr, dumpStateHex(state)))
   state = AddRoundKey(state, subkey)
@@ -196,6 +197,7 @@ def rnd(state, subkey, nr):
 
 def invRnd(state, subkey, nr):
   state = AddRoundKey(state, subkey)
+  # MAGIC
   state = MixColumns(state, [0x0E, 0x0B, 0x0D, 0x09])
   state = ShiftRows(state, -1)
   state = SubBytes(state, SRInv)
@@ -237,10 +239,10 @@ def invRijndael(state, cipherKey):
   nk = len(cipherKey)
   nr = max(nb, nk)+6
   expandedKey = keyExpansion(cipherKey, nr, nk, nb)
-  state = invFinalRnd(state, expandedKey[nb*(nr):nb*(nr+1)], nr)
+  state = invFinalRnd(state, expandedKey[nb * nr:nb*(nr + 1)], nr)
   for i in range(nr-1, 0, -1):
-    subkey = expandedKey[nb*i:nb*(i+1)]
-    state = invRnd(state, expandedKey[nb*i:nb*(i+1)], i)
+    subkey = expandedKey[nb * i:nb * (i + 1)]
+    state = invRnd(state, expandedKey[nb * i:nb*(i + 1)], i)
   state = AddRoundKey(state, expandedKey[0:nb])
   return stateToArray(state)
 
@@ -248,8 +250,8 @@ def arrayToState(array):
   state = []
   if len(array)%4 != 0:
     raise StandardError
-  for i in range(0, len(array)/4):
-    state.append(array[i*4:(i+1)*4])
+  for i in range(0, len(array) / 4):
+    state.append(array[i * 4:(i + 1) * 4])
   return state
 
 def stateToArray(state):
