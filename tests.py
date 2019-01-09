@@ -2,10 +2,13 @@
 
 import aes
 import logging
-
+import unittest
 
 tests = [
-  # [keysize, encryption-result-with-all-zero-key-and-all-zero-block-when-encrypted-once, encryption-result-with-all-zero-key-and-all-zero-block-when-encrypted-twice]
+  # [ keysize-in-bits,
+  #   encryption-result-with-all-zero-key-and-all-zero-block-when-encrypted-once,
+  #   encryption-result-with-all-zero-key-and-all-zero-block-when-encrypted-twice
+  # ]
   [128,"66E94BD4EF8A2C3B884CFA59CA342B2E","F795BD4A52E29ED713D313FA20E98DBC"],
   [128,"9E38B8EB1D2025A1665AD4B1F5438BB5CAE1AC3F","939C167E7F916D45670EE21BFC939E1055054A96"],
   [128,"A92732EB488D8BB98ECD8D95DC9C02E052F250AD369B3849","106F34179C3982DDC6750AA01936B7A180E6B0B9D8D690EC"],
@@ -32,32 +35,27 @@ tests = [
   [256,"9BF26FAD5680D56B572067EC2FE162F449404C86303F8BE38FAB6E02","658F144A34AF44AAE66CFDDAB955C483DFBCB4EE9A19A6701F158A66"],
   [256,"C6227E7740B7E53B5CB77865278EAB0726F62366D9AABAD908936123A1FC8AF3","9843E807319C32AD1EA3935EF56A2BA96E4BF19C30E47D88A2B97CBBF2E159E7"]]
 
-def allZero(n):
-  return [0 for x in range(n)]
-
-def complain(t):
-  print t, "doesn't check out"
-
 def parseHex(s):
   return [(int(s[i], 16) * 16 + int(s[i+1], 16)) for i in range(0, len(s), 2)]
 
-for (keysize, s1, s2) in tests:
-  firstRound = parseHex(s1.lower())
-  secondRound = parseHex(s2.lower())
-  if len(secondRound) != len(firstRound):
-    complain(t)
-  blocksize = len(firstRound)
-  key = allZero(keysize/8)
-  msg = allZero(blocksize)
-  c1 = aes.rijndael(aes.arrayToState(msg), aes.arrayToState(key))
-  c2 = aes.rijndael(aes.arrayToState(c1), aes.arrayToState(key))
-  if c1 != firstRound:
-    complain(t)
-  if c2 != secondRound:
-    complain(t)
-  if c1 != aes.invRijndael(aes.arrayToState(c2), aes.arrayToState(key)):
-    complain(t)
-  if msg != aes.invRijndael(aes.arrayToState(c1), aes.arrayToState(key)):
-    complain(t)
-    
+def createTest(keysize, c1, c2):
+  def doubleEncryptTest():
+    assert len(c1) == len(c2)
+    blocksize = len(c1)
+    # Test all-zero keys and msgs
+    key = [0 for x in range(keysize)]
+    msg = [0 for x in range(blocksize)]
+    c1_ = aes.rijndael(aes.arrayToState(msg), aes.arrayToState(key))
+    c2_ = aes.rijndael(aes.arrayToState(c1_), aes.arrayToState(key))
+    assert c1 == c1_
+    assert c2 == c2_
+    assert c1 == aes.invRijndael(aes.arrayToState(c2_), aes.arrayToState(key))
+    assert msg == aes.invRijndael(aes.arrayToState(c1_), aes.arrayToState(key))
+  return doubleEncryptTest
 
+if __name__ == '__main__':
+  ts = unittest.TestSuite()
+  for t in tests:
+    ts.addTest(unittest.FunctionTestCase(createTest(t[0] / 8, parseHex(t[1].lower()), parseHex(t[2].lower()))))
+  runner = unittest.TextTestRunner()
+  runner.run(ts)
