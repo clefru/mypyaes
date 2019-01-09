@@ -4,8 +4,6 @@
 
 class Q(object):
   """Implementation of the mathemical set Q.
-
-  Done incorrectly just using floating point operations.
   """
   def __init__(self):
     pass
@@ -147,21 +145,55 @@ class POF(object):
             b.getCoefficient(k2)))
     return newp
 
-  def longDiv(self, a, b):
-    """Divides a by b."""
-    reminder = a.clone()
+  def longDiv(self, dividend, divisor):
+    """Divides dividend by divisor."""
+
+    # Divides
+    #   a_n x^n + a_n-1 x^n-1 + a_n-2 x^n-2 + ... + a_1 x + a_0
+    # by
+    #   b_m x^m + b_m-1 x^m-1 + b_m-2 x^m-2 + ... + b_1 x + b_0
+    # This works as long as n >= m
+    #
+    # Let's assume that we want to divide
+    # 6 x^4 + 2 x^3 + 9 x^2 + x + 3    by
+    #                 2 x^2 +   + 7
+    # The difference in the highest degrees (x^4 vs x^2). So the quotient
+    # polynomial will have a coefficient for x^2. To find out what coefficient
+    # it is, we do a field division and find that have 6/2 = 3. We multiply
+    # the rest of the division polynomial by 3 and subtract it.
+    # We end up at up:
+    #   6 x^4 + 2 x^3 +  9 x^2 + x + 3 (original polynomial)
+    # subtracted by
+    #   6 x^4 +       + 21 x^2         (divisor multiplied by 3 x^2)
+    # ending in:
+    #   2 x^3 - 12 x^2 + x + 3         (potential reminder)
+    # and we accumulate 3 x^2 in the quotient polynomial.
+    #
+    # We repeat the game, find that the highest degree difference has
+    # shrunk to 1 (x^3 vs x^2) multiply the divisor by 3/2 and
+    # subtract again. Once the potential reminder has a lower degree
+    # than the divisor, we stop.
+    #
+    # The algorithm below is built on that illustration. xtimes is the
+    # difference in the polynomial degree, while q is the quotient
+    # between the coefficients of the highest degrees.
+    #
+    # We start off with the whole dividend as potential reminder
+    reminder = dividend.clone()
     quotient = self.plusID()
-    field = self.field
-    while not (reminder.getDegree() < b.getDegree()):
-      q = field.mul(b.getCoefficient(b.getDegree()).mulInv(),
-                    reminder.getCoefficient(reminder.getDegree()))
-      xtimes = reminder.getDegree() - b.getDegree()
+
+    while not (reminder.getDegree() < divisor.getDegree()):
+      xtimes = reminder.getDegree() - divisor.getDegree()
+      q = self.field.mul(divisor.getCoefficient(divisor.getDegree()).mulInv(),
+                         reminder.getCoefficient(reminder.getDegree()))
+      # Accumulate coefficient in quotient.
       quotient.setCoefficient(xtimes, q)
-      for k in b.nonZeroCoefficients():
+      for k in divisor.nonZeroCoefficients():
+        # Subtract shifted divisor polynomial
         reminder.addToCoefficient(
-          k+xtimes,
-          field.mul(b.getCoefficient(k), q).plusInv())
-    return [quotient, reminder]
+          k + xtimes,
+          self.field.mul(divisor.getCoefficient(k), q).plusInv())
+    return (quotient, reminder)
 
   def plusID(self):
     return POFElement(self)
@@ -305,7 +337,7 @@ def ExtEuclidean(field, a, b):
   """Extended Euclidean algorithm."""
   n1 = a
   n2 = b
-  [q, r]=field.longDiv(n1, n2)
+  (q, r) = field.longDiv(n1, n2)
   x0 = field.mulID()
   x1 = field.plusID()
   y0 = field.plusID()
@@ -321,7 +353,7 @@ def ExtEuclidean(field, a, b):
     x1 = x2
     y0 = y1
     y1 = y2
-    [q, r]=field.longDiv(n1, n2)
+    (q, r) = field.longDiv(n1, n2)
 #    print "n1:",n1," n2:",n2," q:",q," r:",r, " x2: ", x2 #, " y2:",y2
   return [n2, x1, y1];
 
