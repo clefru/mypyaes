@@ -148,6 +148,7 @@ class POF(object):
     return newp
 
   def longDiv(self, a, b):
+    """Divides a by b."""
     reminder = a.clone()
     quotient = self.plusID()
     field = self.field

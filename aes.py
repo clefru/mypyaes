@@ -106,11 +106,11 @@ def keyExpansion(cipherKey, nr, nk, nb):
     expandedKey.append(cipherKey[j])
   for j in range(nk, nb*(nr+1)):
     sub = []
-    if j%nk == 0:
+    if j % nk == 0:
       sub.append(expandedKey[j-nk][0] ^ SR(expandedKey[j-1][1]) ^ RC(j/nk))
       for i in range(1, 4):
         sub.append(expandedKey[j-nk][i] ^ SR(expandedKey[j-1][(i+1)%4]))
-    elif j%nk == 4 and nk > 6:
+    elif j % nk == 4 and nk > 6:
       for i in range(0, 4):
         sub.append(expandedKey[j-nk][i] ^ SR(expandedKey[j-1][i]))
     else:
