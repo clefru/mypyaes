@@ -21,7 +21,8 @@ class Q(object):
     return QElement(a.value * b.value, self)
 
   def longDiv(self, a, b):
-    return [QElement(a.value / b.value, self), QElement(a.value % b.value, self)]
+    return [QElement(a.value / b.value, self),
+            QElement(a.value % b.value, self)]
 
   def __str__(self):
     return "Q"
@@ -465,11 +466,3 @@ def EL2L(lst):
 def POL2L(pofi):
   """Polynomial to list of raw values of its coefficients."""
   return EL2L(POL2EL(pofi))
-
-#if __name__ == '__main__':
-#  for i in range(1, 256):
-#    inverse=fromBin(POL2L(ExtEuclidean(POFZ2, rps, L2POL(toBin(i), Z2))[2]))
-#    inverseinverse=fromBin(POL2L(
-#      ExtEuclidean(POFZ2, rps, L2POL(toBin(inverse), Z2))[2]))
-#    if not (inverseinverse == i):
-#      print i, "not self inverse!"
