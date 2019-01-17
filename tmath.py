@@ -3,34 +3,27 @@
 # Copyright 2004, 2019, Clemens Fruhwirth <clemens@endorphin.org>
 
 
-
-class Q(object):
-  """Implementation of the mathemical set Q.
-  """
-  def __init__(self):
-    pass
-
+class Field(object):
   def plusID(self):
-    return QElement(0, self)
+    raise NotImplementedError
 
   def plus(self, a, b):
-    return QElement(a.value + b.value, self)
+    raise NotImplementedError
 
   def mulID(self):
-    return QElement(1, self)
+    raise NotImplementedError
 
   def mul(self, a, b):
-    return QElement(a.value * b.value, self)
+    raise NotImplementedError
 
   def longDiv(self, a, b):
-    return [QElement(a.value / b.value, self),
-            QElement(a.value % b.value, self)]
+    raise NotImplementedError
 
   def __str__(self):
-    return "Q"
+    raise NotImplementedError
 
   def __repr__(self):
-    return "Q"
+    raise NotImplementedError
 
 
 class FieldElement(object):
@@ -39,23 +32,37 @@ class FieldElement(object):
     pass
 
   def isPlusID(self):
-    return self == field.plusID()
+    return self == self.field.plusID()
 
   def isMulID(self):
-    return self == field.mulID()
+    return self == self.field.mulID()
 
-  def scalarMul(self, scalar):
-    """Scalar multiplication via double and add"""
+  def opN(self, n, neutral, op):
+    """Applies op(self, op(self, ... op(self, neutral))) n-times"""
+
+    # Assuming a binary operator "op", we create the operator lambda a: op1(self, a). Then we apply
+    # op1 to neutral n-times as given by the scalar.
+    #
+    # The implementation here uses the double-and-add algorithm to optimize this to log_n steps.
+
     f = self.field
-    res = f.plusID()
+    res = neutral
     # This variable will double every step and whenever we hit a "true"-bit add itself to res.
     w = self
-    while scalar:
-      if scalar % 2:
-        res = f.plus(res, w)
-      w = f.plus(w, w)
-      scalar = scalar/2
+    while n:
+      if n % 2:
+        res = op(res, w)
+      w = op(w, w)
+      n = n/2
     return res
+
+  def scalarMul(self, scalar):
+    """Scalar multiplication"""
+    return self.opN(scalar, self.field.plusID(), self.field.plus)
+
+  def scalarPow(self, scalar):
+    """Scalar power"""
+    return self.opN(scalar, self.field.mulID(), self.field.mul)
 
   def __eq__(self, other):
     raise NotImplementedError
@@ -89,9 +96,10 @@ class QElement(FieldElement):
     return self.value == a.value
 
 
-class Z(object):
+class Z(Field):
   """Implementation of the mathemical set Z/nZ."""
   def __init__(self, order):
+    super(Z, self).__init__()
     self.order = order
 
   def getOrder(self):
@@ -119,10 +127,10 @@ class Z(object):
     return "Z(%d)" % self.order
 
 
-class ZElement(object):
-  def __init__(self, value, set):
-    self.field = set
-    self.value = value % set.order
+class ZElement(FieldElement):
+  def __init__(self, value, field):
+    super(ZElement, self).__init__(field)
+    self.value = value % field.order
 
   def __str__(self):
     return "%(v)d" % {'v':self.value, 's':self.field }
@@ -133,12 +141,6 @@ class ZElement(object):
   def setValue(self, value):
     self.value = value % self.field.order
 
-  def isPlusID(self):
-    return self.value == 0
-
-  def isMulID(self):
-    return self.value == 1
-
   def plusInv(self):
     return ZElement(self.field.order - self.value, self.field)
 
@@ -148,13 +150,17 @@ class ZElement(object):
   def clone(self):
     return ZElement(self.value, self.field)
 
+  def __eq__(self, a):
+    return self.value == a.value
 
-class POF(object):
+
+class POF(Field):
   """Implementation of a polynomial over an arbitrary field.
 
   POF=PolynomialOverField
   """
   def __init__(self, field):
+    super(POF, self).__init__()
     self.field = field
 
   def plus(self, a, b):
@@ -232,8 +238,9 @@ class POF(object):
     pofi.setCoefficient(0, self.field.mulID())
     return pofi
 
-class POFElement(object):
+class POFElement(FieldElement):
   def __init__(self, pof):
+    super(POFElement, self).__init__(pof)
     self.pof = pof
     self.c = {}
 
@@ -303,7 +310,8 @@ class POFElement(object):
 class GFPOF(POF):
   """Implementation of a Galois field."""
   def __init__(self, field, rp):
-    POF.__init__(self, field)
+    # Field is coefficent field.
+    super(GFPOF, self).__init__(field)
     self.rp = rp
 
   def plusID(self):
@@ -402,6 +410,7 @@ class GFPOF(POF):
 
 class GFPOFElement(POFElement):
   def __init__(self, pof):
+    super(GFPOFElement, self).__init__(pof)
     self.pof = pof
     self.c = {}
 
