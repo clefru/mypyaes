@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 # Copyright 2004, 2019, Clemens Fruhwirth <clemens@endorphin.org>
 
+
+
 class Q(object):
   """Implementation of the mathemical set Q.
   """
@@ -31,34 +33,60 @@ class Q(object):
     return "Q"
 
 
-class QElement(object):
-  def __init__(self, value, set):
-    self.set = set
+class FieldElement(object):
+  def __init__(self, field):
+    self.field = field
+    pass
+
+  def isPlusID(self):
+    return self == field.plusID()
+
+  def isMulID(self):
+    return self == field.mulID()
+
+  def scalarMul(self, scalar):
+    """Scalar multiplication via double and add"""
+    f = self.field
+    res = f.plusID()
+    # This variable will double every step and whenever we hit a "true"-bit add itself to res.
+    w = self
+    while scalar:
+      if scalar % 2:
+        res = f.plus(res, w)
+      w = f.plus(w, w)
+      scalar = scalar/2
+    return res
+
+  def __eq__(self, other):
+    raise NotImplementedError
+
+
+class QElement(FieldElement):
+  def __init__(self, value, field):
+    super(QElement, self).__init__(field)
+    self.field = field
     self.value = value
 
   def __str__(self):
-    return "%(v)f e %(s)s" % {'v':self.value, 's':self.set }
+    return "%(v)f e %(s)s" % {'v':self.value, 's':self.field }
 
   def __repr__(self):
-    return "%(v)f e %(s)s" % {'v':self.value, 's':self.set }
+    return "%(v)f e %(s)s" % {'v':self.value, 's':self.field }
 
   def setValue(self, value):
     self.value = value
 
-  def isPlusID(self):
-    return self.value == 0
-
-  def isMulID(self):
-    return self.value == 1
-
   def plusInv(self):
-    return QElement(-self.value, self.set)
+    return QElement(-self.value, self.field)
 
   def mulInv(self):
-    return QElement(float(1) / float(self.value), self.set)
+    return QElement(float(1) / float(self.value), self.field)
 
   def clone(self):
-    return QElement(self.value, self.set)
+    return QElement(self.value, self.field)
+
+  def __eq__(self, a):
+    return self.value == a.value
 
 
 class Z(object):
@@ -73,7 +101,7 @@ class Z(object):
     return ZElement(0, self)
 
   def plus(self, a, b):
-    if a.set == b.set:
+    if a.field == b.field:
       return ZElement(a.value + b.value, self)
     else:
       raise Error, 'Trying to add ZElements from different Z classes'
@@ -93,17 +121,17 @@ class Z(object):
 
 class ZElement(object):
   def __init__(self, value, set):
-    self.set = set
+    self.field = set
     self.value = value % set.order
 
   def __str__(self):
-    return "%(v)d" % {'v':self.value, 's':self.set }
+    return "%(v)d" % {'v':self.value, 's':self.field }
 
   def __repr__(self):
-    return "%(v)d" % {'v':self.value, 's':self.set }
+    return "%(v)d" % {'v':self.value, 's':self.field }
 
   def setValue(self, value):
-    self.value = value % self.set.order
+    self.value = value % self.field.order
 
   def isPlusID(self):
     return self.value == 0
@@ -112,13 +140,13 @@ class ZElement(object):
     return self.value == 1
 
   def plusInv(self):
-    return ZElement(self.set.order - self.value, self.set)
+    return ZElement(self.field.order - self.value, self.field)
 
   def mulInv(self):
-    return ZElement(self.value ** (self.set.order - 2), self.set)
+    return ZElement(self.value ** (self.field.order - 2), self.field)
 
   def clone(self):
-    return ZElement(self.value, self.set)
+    return ZElement(self.value, self.field)
 
 
 class POF(object):
