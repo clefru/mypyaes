@@ -29,7 +29,6 @@ class Field(object):
 class FieldElement(object):
   def __init__(self, field):
     self.field = field
-    pass
 
   def isPlusID(self):
     return self == self.field.plusID()
@@ -97,6 +96,9 @@ class Z(Field):
 
   def __repr__(self):
     return "Z(%d)" % self.order
+
+  def fromInt(self, i):
+    return ZElement(i, self)
 
 
 class ZElement(FieldElement):
@@ -210,8 +212,10 @@ class POF(Field):
     return self.plusID().setCoefficient(0, self.field.mulID())
 
   def fromEL(self, lst):
+    """Create polynomial from field coefficient list."""
     pofi = self.plusID()
-    pofi.setCoefficient(0, self.field.mulID())
+    for i in range(0, len(lst)):
+      pofi.setCoefficient(i, lst[i])
     return pofi
 
 class POFElement(FieldElement):
@@ -251,12 +255,6 @@ class POFElement(FieldElement):
       newp.setCoefficient(i, self.getCoefficient(i).plusInv())
     return newp
 
-  def isPlusID(self):
-    return self.nonZeroCoefficients() == []
-
-  def isMulID(self):
-    return self.nonZeroCoefficients() == [0]
-
   def __str__(self):
     return self.__repr__()
 
@@ -284,6 +282,20 @@ class POFElement(FieldElement):
       clone.setCoefficient(i, self.getCoefficient(i).clone())
     return clone
 
+  def __eq__(self, other):
+    return self.c == other.c
+
+  def toEL(self):
+    """Get coefficient list in underlying field from polynomial."""
+    # FIXME: This seems horribly complicated.
+    list = []
+    if self.getDegree() == None:
+      return list
+    for i in range(0, self.getDegree() + 1):
+      list.append(self.pof.field.plusID())
+    for i in self.nonZeroCoefficients():
+      list[i] = self.getCoefficient(i)
+    return list
 
 class GFPOF(POF):
   """Implementation of a Galois field."""
@@ -392,6 +404,11 @@ class GFPOFElement(POFElement):
     self.pof = pof
     self.c = {}
 
+  def setCoefficient(self, n, c):
+    if n >= self.pof.rp.getDegree():
+      raise ValueError("can't set coefficient larger than the reduction polynomial's degree.")
+    return super(GFPOFElement, self).setCoefficient(n, c)
+
   def mulInv(self):
     return ExtEuclidean(POF(self.pof.field), self.pof.rp, self)[2]
 
@@ -440,19 +457,13 @@ def fromBin(a):
   return r/2
 
 def EL2POL(a, pof):
-  """Create polynomial from field coefficient list."""
-  pofi = pof.plusID()
-  for i in range(0, len(a)):
-    pofi.setCoefficient(i, a[i])
-  return pofi
+  return pof.fromEL(a)
 
 def L2EL(lst, field):
   """List of raw values to a list of field elements."""
   r = []
   for i in lst:
-    elem = field.plusID()
-    elem.setValue(i)
-    r.append(elem)
+    r.append(field.plusID().setValue(i))
   return r
 
 def L2POL(a, field):
@@ -460,16 +471,7 @@ def L2POL(a, field):
   return EL2POL(L2EL(a, field), POF(field))
 
 def POL2EL(pofi):
-  """Get coefficient list in underlying field from polynomial."""
-  # FIXME: This seems horribly complicated.
-  list = []
-  if pofi.getDegree() == None:
-    return list
-  for i in range(0, pofi.getDegree() + 1):
-    list.append(pofi.pof.field.plusID())
-  for i in pofi.nonZeroCoefficients():
-    list[i] = pofi.getCoefficient(i)
-  return list
+  return pofi.toEL()
 
 def EL2L(lst):
   """List of field elements to list of raw values."""
