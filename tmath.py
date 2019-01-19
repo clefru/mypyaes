@@ -282,6 +282,10 @@ class POFElement(FieldElement):
       clone.setCoefficient(i, self.getCoefficient(i).clone())
     return clone
 
+  def xtime(self):
+    # Move all coefficients higher by inserting a zero coefficient.
+    self.c.insert(0, self.field.plusID())
+
   def __eq__(self, other):
     return self.c == other.c
 
@@ -357,44 +361,12 @@ class GFPOF(POF):
 
     result = self.plusID()
     for b_p in range(b.getDegree(), -1, -1):
-      result = self.xtime(result)
+      result = result.xtime()
       for a_p in a.nonZeroCoefficients():
         result.addToCoefficient(
           a_p,
           self.field.mul(b.getCoefficient(b_p),
                          a.getCoefficient(a_p)))
-    return result
-
-  def xtime(self, a):
-    """Multiplies the polynomial by x.
-
-    It is a building block of the multiplication algorithm mul.
-    """
-    result = self.plusID()
-
-    # The polynomial
-    #   a_n x^n     + a_{n-1} x^{n-1} + ... + a_1 x   + a_0
-    # gets multiplied by x resulting in
-    #   a_n x^{n+1} + a_{n-1} x^n     + ... + a_1 x^2 + a_0 x
-    # ... essentially shifting the coefficients by one index higher.
-    #
-    # The resulting polynomial needs to be reduced by the reduction
-    # polynomial. The following loop subtracts the reduction
-    # polynomial a_n times from the result, and also shifts the
-    # indices.
-
-    # Get the highest coefficient of the reduction polynomial, and
-    # subtract the reduction polynomial a_n times from a.
-    a_n = a.getCoefficient(self.rp.getDegree()-1)
-    for i in range(0, self.rp.getDegree()):
-      result.setCoefficient(
-        i,
-        self.field.plus(
-          # Get plusID from the underlying field for the lowest
-          # coefficient
-          a.getCoefficient(i-1) if i else self.field.plusID(),
-          self.field.mul(a_n,
-                         self.rp.getCoefficient(i)).plusInv()))
     return result
 
 
@@ -411,6 +383,39 @@ class GFPOFElement(POFElement):
 
   def mulInv(self):
     return ExtEuclidean(POF(self.pof.field), self.pof.rp, self)[2]
+
+  def xtime(self):
+    """Multiplies the polynomial by x.
+
+    It is a building block of the multiplication algorithm mul.
+    """
+    result = self.pof.plusID()
+
+    # The polynomial
+    #   a_n x^n     + a_{n-1} x^{n-1} + ... + a_1 x   + a_0
+    # gets multiplied by x resulting in
+    #   a_n x^{n+1} + a_{n-1} x^n     + ... + a_1 x^2 + a_0 x
+    # ... essentially shifting the coefficients by one index higher.
+    #
+    # The resulting polynomial needs to be reduced by the reduction
+    # polynomial. The following loop subtracts the reduction
+    # polynomial a_n times from the result, and also shifts the
+    # indices.
+
+    # Get the highest coefficient of the reduction polynomial, and
+    # subtract the reduction polynomial a_n times from a.
+    a_n = self.getCoefficient(self.pof.rp.getDegree()-1)
+    for i in range(0, self.pof.rp.getDegree()):
+      result.setCoefficient(
+        i,
+        self.pof.field.plus(
+          # Get plusID from the underlying field for the lowest
+          # coefficient
+          self.getCoefficient(i-1) if i else self.pof.field.plusID(),
+          self.pof.field.mul(a_n,
+                         self.pof.rp.getCoefficient(i)).plusInv()))
+    return result
+
 
 
 def ExtEuclidean(field, a, b):

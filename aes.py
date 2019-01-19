@@ -97,7 +97,7 @@ def RC(a):
 
 def xtime(a):
   pol = GFPOFZ2.fromEL(L2EL(toBin(a), Z2))
-  newpol = GFPOFZ2.xtime(pol)
+  newpol = pol.xtime()
   return fromBin(EL2L(newpol.toEL()))
 
 def keyExpansion(cipherKey, nr, nk, nb):
