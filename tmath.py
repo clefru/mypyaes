@@ -112,6 +112,7 @@ class ZElement(FieldElement):
 
   def setValue(self, value):
     self.value = value % self.field.order
+    return self
 
   def plusInv(self):
     return ZElement(self.field.order - self.value, self.field)
@@ -206,6 +207,9 @@ class POF(Field):
     return POFElement(self)
 
   def mulID(self):
+    return self.plusID().setCoefficient(0, self.field.mulID())
+
+  def fromEL(self, lst):
     pofi = self.plusID()
     pofi.setCoefficient(0, self.field.mulID())
     return pofi
@@ -216,18 +220,20 @@ class POFElement(FieldElement):
     self.pof = pof
     self.c = {}
 
-  def setCoefficient(self, n, fieldinstance):
-    if fieldinstance.isPlusID():
+  def setCoefficient(self, n, c):
+    """Sets coefficient of x^n."""
+    if c.isPlusID():
       if n in self.c:
         self.c.pop(n)
     else:
-      self.c[n] = fieldinstance
+      self.c[n] = c
+    return self
 
   def getCoefficient(self, n):
     return self.c.get(n, self.pof.field.plusID())
 
   def addToCoefficient(self, n, i):
-    self.setCoefficient(n, self.pof.field.plus(self.getCoefficient(n), i))
+    return self.setCoefficient(n, self.pof.field.plus(self.getCoefficient(n), i))
 
   def getDegree(self):
     max = None
