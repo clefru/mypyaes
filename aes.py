@@ -73,7 +73,7 @@ def g(a):
   This is just the multiplicative inverse under GFPOFZ2.
   """
   if a == 0: return 0
-  return fromBin(POL2L(EL2POL(L2EL(toBin(a), Z2), GFPOFZ2).mulInv()))
+  return fromBin(POL2L(GFPOFZ2.fromEL(L2EL(toBin(a), Z2)).mulInv()))
 
 def SR(a):
   return STable[a]
@@ -96,9 +96,9 @@ def RC(a):
   return RCCache[a]
 
 def xtime(a):
-  pol = EL2POL(L2EL(toBin(a), Z2), GFPOFZ2)
+  pol = GFPOFZ2.fromEL(L2EL(toBin(a), Z2))
   newpol = GFPOFZ2.xtime(pol)
-  return fromBin(EL2L(POL2EL(newpol)))
+  return fromBin(EL2L(newpol.toEL()))
 
 def keyExpansion(cipherKey, nr, nk, nb):
   expandedKey = []
@@ -161,12 +161,12 @@ def SingleMixColumn(stateSub, coeffs):
     res = GFPOFZ2.plusID()
 #    print "LC: ", localcoeffs
     for i in range(0, 4):
-      pol1 = EL2POL(L2EL(toBin(stateSub[i]), Z2), GFPOFZ2)
-      pol2 = EL2POL(L2EL(toBin(localcoeffs[i]), Z2), GFPOFZ2)
+      pol1 = GFPOFZ2.fromEL(L2EL(toBin(stateSub[i]), Z2))
+      pol2 = GFPOFZ2.fromEL(L2EL(toBin(localcoeffs[i]), Z2))
       mulres = GFPOFZ2.mul(pol1, pol2)
 #      print "pol1:",  pol1,  "pol2:", pol2,  "mulres: ", mulres
       res = GFPOFZ2.plus(res, mulres)
-    fb = fromBin(EL2L(POL2EL(res)))
+    fb = fromBin(EL2L(res.toEL()))
     resStateSub.append(fb)
     localcoeffs = RORRay(localcoeffs, 1)
   return resStateSub

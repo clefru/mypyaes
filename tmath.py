@@ -456,9 +456,6 @@ def fromBin(a):
     pass
   return r/2
 
-def EL2POL(a, pof):
-  return pof.fromEL(a)
-
 def L2EL(lst, field):
   """List of raw values to a list of field elements."""
   r = []
@@ -468,10 +465,7 @@ def L2EL(lst, field):
 
 def L2POL(a, field):
   """Create polynomial from raw coefficient list in field."""
-  return EL2POL(L2EL(a, field), POF(field))
-
-def POL2EL(pofi):
-  return pofi.toEL()
+  return POF(field).fromEL(L2EL(a, field))
 
 def EL2L(lst):
   """List of field elements to list of raw values."""
@@ -482,4 +476,5 @@ def EL2L(lst):
 
 def POL2L(pofi):
   """Polynomial to list of raw values of its coefficients."""
-  return EL2L(POL2EL(pofi))
+  return EL2L(pofi.toEL())
+
