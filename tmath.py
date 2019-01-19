@@ -68,34 +68,6 @@ class FieldElement(object):
     raise NotImplementedError
 
 
-class QElement(FieldElement):
-  def __init__(self, value, field):
-    super(QElement, self).__init__(field)
-    self.field = field
-    self.value = value
-
-  def __str__(self):
-    return "%(v)f e %(s)s" % {'v':self.value, 's':self.field }
-
-  def __repr__(self):
-    return "%(v)f e %(s)s" % {'v':self.value, 's':self.field }
-
-  def setValue(self, value):
-    self.value = value
-
-  def plusInv(self):
-    return QElement(-self.value, self.field)
-
-  def mulInv(self):
-    return QElement(float(1) / float(self.value), self.field)
-
-  def clone(self):
-    return QElement(self.value, self.field)
-
-  def __eq__(self, a):
-    return self.value == a.value
-
-
 class Z(Field):
   """Implementation of the mathemical set Z/nZ."""
   def __init__(self, order):
