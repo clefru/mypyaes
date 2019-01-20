@@ -100,6 +100,9 @@ class Z(Field):
   def fromInt(self, i):
     return ZElement(i, self)
 
+  def enum(self, i):
+    return (ZElement(i % self.order, self), i/self.order)
+
 
 class ZElement(FieldElement):
   def __init__(self, value, field):
@@ -217,6 +220,15 @@ class POF(Field):
     for i in range(0, len(lst)):
       pofi.setCoefficient(i, lst[i])
     return pofi
+
+  def fromInt(self, i):
+    res = self.plusID()
+    n = 0
+    while i:
+      c, i = self.field.enum(i)
+      res.setCoefficient(n, c)
+      n += 1
+    return res
 
 class POFElement(FieldElement):
   def __init__(self, pof):

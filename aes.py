@@ -25,7 +25,7 @@ Z2 = Z(2)
 POFZ2 = POF(Z2)
 
 # Reduction polynomial in POFZ2 as defined by Page 36 of the Rijndael book. MAGIC
-rp = L2POL([1, 1, 0, 1, 1, 0, 0, 0, 1], Z2)
+rp = POFZ2.fromInt(0x11b)
 
 # Galois field over Z2 with reduction polynomial
 GFPOFZ2 = GFPOF(Z2, rp)
@@ -73,7 +73,7 @@ def g(a):
   This is just the multiplicative inverse under GFPOFZ2.
   """
   if a == 0: return 0
-  return fromBin(POL2L(GFPOFZ2.fromEL(L2EL(toBin(a), Z2)).mulInv()))
+  return fromBin(POL2L(GFPOFZ2.fromInt(a).mulInv()))
 
 def SR(a):
   return STable[a]
@@ -96,7 +96,7 @@ def RC(a):
   return RCCache[a]
 
 def xtime(a):
-  pol = GFPOFZ2.fromEL(L2EL(toBin(a), Z2))
+  pol = GFPOFZ2.fromInt(a)
   newpol = pol.xtime()
   return fromBin(EL2L(newpol.toEL()))
 
@@ -161,8 +161,8 @@ def SingleMixColumn(stateSub, coeffs):
     res = GFPOFZ2.plusID()
 #    print "LC: ", localcoeffs
     for i in range(0, 4):
-      pol1 = GFPOFZ2.fromEL(L2EL(toBin(stateSub[i]), Z2))
-      pol2 = GFPOFZ2.fromEL(L2EL(toBin(localcoeffs[i]), Z2))
+      pol1 = GFPOFZ2.fromInt(stateSub[i])
+      pol2 = GFPOFZ2.fromInt(localcoeffs[i])
       mulres = GFPOFZ2.mul(pol1, pol2)
 #      print "pol1:",  pol1,  "pol2:", pol2,  "mulres: ", mulres
       res = GFPOFZ2.plus(res, mulres)
