@@ -295,8 +295,10 @@ class POFElement(FieldElement):
     return clone
 
   def xtime(self):
-    # Move all coefficients higher by inserting a zero coefficient.
-    self.c.insert(0, self.field.plusID())
+    # Shift all coefficients higher by one
+    pol = self.clone()
+    pol.c = dict((k + 1, v) for k, v in self.c.items())
+    return pol
 
   def __eq__(self, other):
     return self.c == other.c
