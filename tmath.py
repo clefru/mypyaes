@@ -131,6 +131,9 @@ class ZElement(FieldElement):
   def __eq__(self, a):
     return self.value == a.value
 
+  def toInt(self):
+    return self.value
+
 
 class POF(Field):
   """Implementation of a polynomial over an arbitrary field.
@@ -314,6 +317,13 @@ class POFElement(FieldElement):
     for i in self.nonZeroCoefficients():
       list[i] = self.getCoefficient(i)
     return list
+
+  def toInt(self):
+    res = 0
+    for i in range(self.getDegree() + 1, 0):
+      res += self.getCoefficient(i)
+      res *= self.field.getOrder()
+    return res
 
 class GFPOF(POF):
   """Implementation of a Galois field."""
