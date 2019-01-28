@@ -74,7 +74,7 @@ class Z(Field):
     self.order = order
 
   def getOrder(self):
-    return order
+    return self.order
 
   def plusID(self):
     return ZElement(0, self)
