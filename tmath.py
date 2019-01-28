@@ -123,7 +123,7 @@ class ZElement(FieldElement):
     return ZElement(self.field.order - self.value, self.field)
 
   def mulInv(self):
-    return ZElement(self.value ** (self.field.order - 2), self.field)
+    return self.scalarPow(self.field.order - 2)
 
   def clone(self):
     return ZElement(self.value, self.field)
