@@ -81,8 +81,8 @@ def SR(a):
 def SRInv(a):
   return SInvTable[a]
 
-STable = []
-SInvTable = []
+STable = bytearray()
+SInvTable = bytearray()
 for i in range(0, 0x100):
   STable.append(f(g(i)))
   SInvTable.append(g(fInv(i)))
@@ -105,7 +105,7 @@ def keyExpansion(cipherKey, nr, nk, nb):
   for j in range(0, nk):
     expandedKey.append(cipherKey[j])
   for j in range(nk, nb*(nr+1)):
-    sub = []
+    sub = bytearray()
     if j % nk == 0:
       sub.append(expandedKey[j-nk][0] ^ SR(expandedKey[j-1][1]) ^ RC(j/nk))
       for i in range(1, 4):
@@ -139,15 +139,13 @@ def ShiftRows(state, amp):
   """Sec 3.4.2 of the Rijndael book."""
   offsets = ShiftRowsOffsets[len(state) - 4]
   newstate = copy.deepcopy(state)
-  r = []
   for j in range(0, len(state)):
-    s = []
     for i in range(0, 4):
       newstate[j][i] = state[(j + offsets[i] * amp) % len(state)][i]
   return newstate
 
 def RORRay(array, amount):
-  new = []
+  new = bytearray()
   for i in array[-amount:]:
     new.append(i)
   for i in array[0:-amount]:
@@ -155,7 +153,7 @@ def RORRay(array, amount):
   return new
 
 def SingleMixColumn(stateSub, coeffs):
-  resStateSub = []
+  resStateSub = bytearray()
   localcoeffs = RORRay(coeffs, 0)
   for j in range(0, 4):
     res = GFPOFZ2.plusID()
@@ -219,7 +217,9 @@ def invFinalRnd(state, key, nr):
   state = SubBytes(state, SRInv)
   return state
 
-def rijndael(state, cipherKey):
+def rijndael(msg, key):
+  state = arrayToState(msg)
+  cipherKey = arrayToState(key)
   nb = len(state)
   nk = len(cipherKey)
   nr = max(nb, nk)+6
@@ -234,7 +234,9 @@ def rijndael(state, cipherKey):
   logger.debug("R[%02d].output  %s" % (nr, dumpStateHex(state)))
   return stateToArray(state)
 
-def invRijndael(state, cipherKey):
+def invRijndael(msg, key):
+  state = arrayToState(msg)
+  cipherKey = arrayToState(key)
   nb = len(state)
   nk = len(cipherKey)
   nr = max(nb, nk)+6
@@ -251,11 +253,11 @@ def arrayToState(array):
   if len(array)%4 != 0:
     raise StandardError
   for i in range(0, len(array) / 4):
-    state.append(array[i * 4:(i + 1) * 4])
+    state.append(bytearray(array[i * 4:(i + 1) * 4]))
   return state
 
 def stateToArray(state):
-  array = []
+  array = bytearray()
   for i in state:
     for j in i:
       array.append(j)
@@ -275,22 +277,22 @@ def dumpStateHex(state):
 if __name__ == '__main__':
   # D.2 Rijndael test vectors
   # This enc test vector comes from Page 216 in the Rijndael
-  key = [
+  key = bytearray([
     0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6,
-    0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c]
+    0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c])
 
-  plaintext = [
+  plaintext = bytearray([
     0x32, 0x43, 0xf6, 0xa8, 0x88, 0x5a, 0x30, 0x8d,
-    0x31, 0x31, 0x98, 0xa2, 0xe0, 0x37, 0x07, 0x34]
+    0x31, 0x31, 0x98, 0xa2, 0xe0, 0x37, 0x07, 0x34])
 
   # Labelled R[10].output in output
-  ciphertext = [ 0x39, 0x25, 0x84, 0x1d, 0x02, 0xdc, 0x09, 0xfb,
-                 0xdc, 0x11, 0x85, 0x97, 0x19, 0x6a, 0x0b, 0x32]
+  ciphertext = bytearray([ 0x39, 0x25, 0x84, 0x1d, 0x02, 0xdc, 0x09, 0xfb,
+                           0xdc, 0x11, 0x85, 0x97, 0x19, 0x6a, 0x0b, 0x32])
   logger.setLevel(logging.DEBUG)
 
-  enc = rijndael(arrayToState(plaintext), arrayToState(key))
+  enc = rijndael(plaintext, key)
   print "Test vector check: ", enc == ciphertext
 
-  dec = invRijndael(arrayToState(enc), arrayToState(key))
+  dec = invRijndael(enc, key)
   print "Encryption symmetry:", plaintext == dec
 

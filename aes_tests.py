@@ -36,26 +36,34 @@ tests = [
   [256,"C6227E7740B7E53B5CB77865278EAB0726F62366D9AABAD908936123A1FC8AF3","9843E807319C32AD1EA3935EF56A2BA96E4BF19C30E47D88A2B97CBBF2E159E7"]]
 
 def parseHex(s):
-  return [(int(s[i], 16) * 16 + int(s[i+1], 16)) for i in range(0, len(s), 2)]
+  return bytearray([(int(s[i], 16) * 16 + int(s[i+1], 16)) for i in range(0, len(s), 2)])
 
-def createTest(keysize, c1, c2):
-  def doubleEncryptTest():
+class EncryptionTest(unittest.TestCase):
+  def __init__(self, keysize, c1, c2):
+    super(EncryptionTest, self).__init__("testEncryption")
+    self.keysize = keysize
+    self.c1 = c1
+    self.c2 = c2
+
+  def testEncryption(self):
+    c1 = self.c1
+    c2 = self.c2
+    keysize = self.keysize
     assert len(c1) == len(c2)
     blocksize = len(c1)
     # Test all-zero keys and msgs
-    key = [0 for x in range(keysize)]
-    msg = [0 for x in range(blocksize)]
-    c1_ = aes.rijndael(aes.arrayToState(msg), aes.arrayToState(key))
-    c2_ = aes.rijndael(aes.arrayToState(c1_), aes.arrayToState(key))
-    assert c1 == c1_
-    assert c2 == c2_
-    assert c1 == aes.invRijndael(aes.arrayToState(c2_), aes.arrayToState(key))
-    assert msg == aes.invRijndael(aes.arrayToState(c1_), aes.arrayToState(key))
-  return doubleEncryptTest
+    key = bytearray([0 for x in range(keysize)])
+    msg = bytearray([0 for x in range(blocksize)])
+    c1_ = aes.rijndael(msg, key)
+    c2_ = aes.rijndael(c1_, key)
+    self.assertEqual(c1, c1_)
+    self.assertEqual(c2, c2_)
+    self.assertEqual(c1, aes.invRijndael(c2_, key))
+    self.assertEqual(msg, aes.invRijndael(c1_, key))
 
 if __name__ == '__main__':
   ts = unittest.TestSuite()
   for t in tests:
-    ts.addTest(unittest.FunctionTestCase(createTest(t[0] / 8, parseHex(t[1].lower()), parseHex(t[2].lower()))))
+    ts.addTest(EncryptionTest(t[0] / 8, parseHex(t[1].lower()), parseHex(t[2].lower())))
   runner = unittest.TextTestRunner()
   runner.run(ts)
